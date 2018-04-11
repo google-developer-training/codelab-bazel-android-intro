@@ -16,8 +16,8 @@
 
 package com.example.android.mediarecorder;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
@@ -25,7 +25,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
@@ -49,6 +48,10 @@ public class MainActivity extends Activity {
     private File mOutputFile;
 
     private boolean isRecording = false;
+    private boolean cameraPermission = false;
+    private boolean microphonePermission = false;
+    private boolean storagePermission = false;
+    private static final int PERMISSION_CODE = 1001;  // Arbitrary int
     private static final String TAG = "Recorder";
     private Button captureButton;
 
@@ -59,6 +62,27 @@ public class MainActivity extends Activity {
 
         mPreview = (TextureView) findViewById(R.id.surface_view);
         captureButton = (Button) findViewById(R.id.button_capture);
+        if (Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(new String[]{
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.RECORD_AUDIO,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_CODE);
+        } else {
+            cameraPermission = true;
+            microphonePermission = true;
+            storagePermission = true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, String[] permissions, int[] grantResults) {
+        if (grantResults.length != 3 || requestCode != PERMISSION_CODE) {
+            return;
+        }
+        cameraPermission = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        microphonePermission = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+        storagePermission = grantResults[2] == PackageManager.PERMISSION_GRANTED;
     }
 
     /**
@@ -69,6 +93,11 @@ public class MainActivity extends Activity {
      * @param view the view generating the event.
      */
     public void onCaptureClick(View view) {
+        if (!(cameraPermission && microphonePermission && storagePermission)) {
+          setCaptureButtonText("Missing permissions!");
+          return;
+        }
+
         if (isRecording) {
             // BEGIN_INCLUDE(stop_release_media_recorder)
 
