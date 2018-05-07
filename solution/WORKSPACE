@@ -1,3 +1,4 @@
 android_sdk_repository(
     name = "androidsdk",
+    path = "/Users/codelab/Library/Android/sdk", # Path to Android SDK, optional if $ANDROID_HOME is set
 )
